@@ -132,9 +132,9 @@ def referral_page():
         html.H2("Your Referral Summary"),
         dbc.Table([
             html.Thead(html.Tr([
-                html.Th("Option", style={"width": "30%"}),
-                html.Th("Service Function", style={"width": "40%"}),
-                html.Th("Header", style={"width": "30%"})
+                html.Th("CGH Specific Need", style={"width": "30%"}),
+                html.Th("Service Function / Need", style={"width": "40%"}),
+                html.Th("Means from Original SST", style={"width": "30%"})
             ])),
             html.Tbody(table_rows)
         ], bordered=True, hover=False, responsive=True, className="table-fixed"),
