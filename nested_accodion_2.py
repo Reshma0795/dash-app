@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import sqlite3
 from collections import defaultdict
+import os
 
 # Initialize app
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
@@ -124,7 +125,7 @@ def referral_page():
             ]))
             # Add to text for copy
             copy_lines.append(
-                f"Option: {option if i == 0 else ''}\tService Function: {sf}\tHeader: {header if i == 0 else ''}"
+                f"CGH Specific Means (Blue Column B): {option if i == 0 else ''}\tService Function/Needs: {sf}\tMeans from Original SST (Pink Column A): {header if i == 0 else ''}"
             )
 
     return dbc.Container([
@@ -177,4 +178,5 @@ def generate_referral_and_redirect(n_clicks, values, ids):
     return "/referral"
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    port = int(os.environ.get("PORT", 8050))
+    app.run_server(debug=True, host="0.0.0.0", port=port)
