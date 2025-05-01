@@ -1,5 +1,5 @@
 import dash
-from dash import html, dcc, Input, Output, State, ALL, callback_context
+from dash import html, dcc, Input, Output, State, ALL
 import dash_bootstrap_components as dbc
 import pandas as pd
 import sqlite3
@@ -86,7 +86,8 @@ def main_page():
         dcc.Store(id="session-id", storage_type="session"),
         dbc.Accordion(create_accordion(), start_collapsed=True, always_open=True, id="main-accordion"),
         html.Br(),
-        dbc.Button("Generate Referral", id="generate-referral-btn", color="primary"),
+        dbc.Row(
+        dbc.Col(dbc.Button("Generate Referral", id="generate-referral-btn", color="primary"),width="auto"),justify="center",className="my-4")
     ], fluid=True)
 
 # Page: Referral Summary
@@ -104,35 +105,52 @@ def referral_page():
     cursor.execute('SELECT option, service_function, header FROM referral WHERE session_id = ?', (session_id,))
     rows = cursor.fetchall()
 
-    # Group the data
+    # Group data by option and header
     grouped_data = defaultdict(list)
     for option, service_function, header in rows:
         grouped_data[(option, header)].append(service_function)
 
+    # ----- Table Rows -----
     table_rows = []
-    copy_lines = []  # this holds plain text for clipboard
-
     for (option, header), service_functions in grouped_data.items():
         if table_rows:
-            table_rows.append(html.Tr([html.Td(colSpan=3, style={"height": "10px", "border": "none"})]))
-            copy_lines.append("")  # blank line between groups
+        # Add a light separator row between groups
+            table_rows.append(
+                html.Tr([
+                    html.Td(colSpan=3, style={
+                        "height": "8px",
+                        "borderTop": "2px solid #ddd",
+                        "backgroundColor": "#f9f9f9"
+                    })
+                ])
+            )
 
-        for i, sf in enumerate(service_functions):
+        for i, service_function in enumerate(service_functions):
             table_rows.append(html.Tr([
                 html.Td(option if i == 0 else "", style={"verticalAlign": "top"}),
-                html.Td(sf),
+                html.Td(service_function),
                 html.Td(header if i == 0 else "", style={"verticalAlign": "top"})
             ]))
-            # Add to text for copy
-            copy_lines.append(
-                f"CGH Specific Means (Blue Column B): {option if i == 0 else ''}\tService Function/Needs: {sf}\tMeans from Original SST (Pink Column A): {header if i == 0 else ''}"
-            )
+
+    # ----- Copy Lines -----
+    # Group by option and header with joined service functions
+    condensed = defaultdict(lambda: defaultdict(list))
+    for option, service_function, header in rows:
+        condensed[option][header].append(service_function)
+
+    copy_lines = []
+    for option, headers in condensed.items():
+        for header, functions in headers.items():
+            copy_lines.append(f"CGH Specific Means: {option}")
+            copy_lines.append(f"- Service Function/Needs: {', '.join(functions)}")
+            copy_lines.append(f"  Means from Original SST: {header}")
+            copy_lines.append("")
 
     return dbc.Container([
         html.H2("Your Referral Summary"),
         dbc.Table([
             html.Thead(html.Tr([
-                html.Th("CGH Specific Need", style={"width": "30%"}),
+                html.Th("CGH Specific Means", style={"width": "30%"}),
                 html.Th("Service Function / Need", style={"width": "40%"}),
                 html.Th("Means from Original SST", style={"width": "30%"})
             ])),
@@ -140,12 +158,31 @@ def referral_page():
         ], bordered=True, hover=False, responsive=True, className="table-fixed"),
         html.Br(),
         html.Div([
-            html.Div("📋 Copy referral details:", style={"marginBottom": "8px"}),
-            dcc.Clipboard(
-                target_id="referral-plain-text",
-                title="Copy",
-                style={"fontSize": "14px", "padding": "6px 12px", "cursor": "pointer", "background": "#f1f1f1", "border": "1px solid #ccc"}
-            ),
+            html.Div([
+    html.Div([
+        html.Span("Copy referral details:", style={"fontWeight": "600", "marginRight": "10px"}),
+        dcc.Clipboard(
+            target_id="referral-plain-text",
+            title="Copy",
+            style={
+                "fontSize": "16px",
+                "cursor": "pointer",
+                "verticalAlign": "middle"
+            }
+        )
+    ], style={
+        "display": "flex",
+        "alignItems": "center",
+        "padding": "10px",
+        "border": "1px solid #ccc",
+        "borderRadius": "6px",
+        "backgroundColor": "#f8f9fa",
+        "boxShadow": "0 1px 2px rgba(0, 0, 0, 0.05)",
+        "width": "fit-content"
+    })
+], className="my-3"),
+
+
             html.Pre("\n".join(copy_lines), id="referral-plain-text", style={"display": "none"})
         ]),
         html.Br(),
@@ -178,5 +215,5 @@ def generate_referral_and_redirect(n_clicks, values, ids):
     return "/referral"
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))
-    app.run_server(debug=True, host="0.0.0.0", port=port)
+    app.run_server(debug=True)
+
