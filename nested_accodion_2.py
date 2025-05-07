@@ -52,32 +52,25 @@ def create_accordion():
         for header, options in headers.items():
             checklist = dbc.Checklist(
                 options=[{'label': html.Span(option), 'value': f"{service}|{header}|{option}"} for option in options],
-                id={'type': 'service-checklist', 'index': f"{service}|||{header}"}
-            )
+                id={'type': 'service-checklist', 'index': f"{service}|||{header}"})
             sub_items.append(dbc.AccordionItem(checklist, title=header, item_id=f"{service}-{header}"))
 
         sub_accordion = dbc.Accordion(
-            sub_items, flush=True, start_collapsed=True, always_open=True, id=f"sub-accordion-{service}"
-        )
+            sub_items, flush=True, start_collapsed=True, always_open=True, id=f"sub-accordion-{service}", className="sub-accordion")
         accordion_header = html.Span([
             html.Span(service),
             html.I(className="fa fa-info-circle", id=info_icon_id, style={
                 "cursor": "pointer",
                 "marginLeft": "8px",
                 "color": "#0d6efd",
-                "fontSize": "14px"
-            }),
+                "fontSize": "14px"}),
             dbc.Popover(
-                [
-                    dbc.PopoverHeader("Definition"),
-                    dbc.PopoverBody(definition)
-                ],
+                [dbc.PopoverHeader("Definition"),dbc.PopoverBody(definition)],
                 id=f"popover-{info_icon_id}",
                 target=info_icon_id,
                 trigger="hover",
                 placement="right",
-                style={"maxWidth": "300px"}
-            )
+                style={"maxWidth": "300px"})
         ])
 
         items.append(
@@ -86,11 +79,15 @@ def create_accordion():
                     sub_accordion,
                     title=accordion_header,
                     item_id=service
-                )], style={
-                "border": "1px solid #adb5bd",
-                "borderRadius": "6px",
-                "marginBottom": "12px",
-                "boxShadow": "0 1px 3px rgba(0, 0, 0, 0.05)"}))
+                )
+            ], style={
+                "border": "3px solid #F06D1A",     # Darker border for main level
+                "borderRadius": "8px",
+                "marginBottom": "4px",
+                "boxShadow": "0 2px 4px rgba(0, 0, 0, 0.08)",
+                "backgroundColor": "#FFFFFFB2"       # Subtle gray background
+            })
+        )
     return items
 
 # Layout
@@ -112,7 +109,7 @@ def main_page():
     return dbc.Container([
         html.H2("List of Suggested Actions", className="my-4 text-center"),
         dcc.Store(id="session-id", storage_type="session"),
-        dbc.Accordion(create_accordion(), start_collapsed=True, always_open=True, id="main-accordion"),
+        dbc.Accordion(create_accordion(), start_collapsed=True, always_open=True, id="main-accordion", className="main-accordion"),
         html.Br(),
         dbc.Row(
         dbc.Col(dbc.Button("Generate Referral", id="generate-referral-btn", color="primary"),width="auto"),justify="center",className="my-4")
@@ -126,8 +123,7 @@ def referral_page():
         return dbc.Container([
             html.H2("Saved Referral"),
             html.P("No saved referrals found."),
-            dbc.Button("Back", href="/", color="secondary", className="mt-3")
-        ], fluid=True)
+            dbc.Button("Back", href="/", color="secondary", className="mt-3")], fluid=True)
 
     session_id = last_session[0]
     cursor.execute('SELECT service_function, sst_original_means,cgh_specific_means FROM referral_records WHERE session_id = ?', (session_id,))
@@ -303,8 +299,47 @@ def sync_selected_options(values_all, ids_all):
 
     return updated_values
 
+app.index_string = '''
+<!DOCTYPE html>
+<html>
+    <head>
+        {%metas%}
+        <title>{%title%}</title>
+        {%favicon%}
+        {%css%}
+        <style>
+
+        .main-accordion .accordion-button:focus {
+            box-shadow: none !important;
+        }
+
+        .main-accordion .accordion-button:not(.collapsed) {
+            background-color: #a8aaad !important;
+            color: #333 !important;
+        }
+
+        .sub-accordion .accordion-button:focus {
+            box-shadow: none !important;
+        }
+
+        .sub-accordion .accordion-button:not(.collapsed) {
+            background-color: #7b9ac9 !important;
+            color: #000 !important;
+        }
+        </style>
+    </head>
+    <body>
+        {%app_entry%}
+        <footer>
+            {%config%}
+            {%scripts%}
+            {%renderer%}
+        </footer>
+    </body>
+</html>
+'''
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 8050))
-    app.run_server(debug=True, host="0.0.0.0", port=port)
-    #app.run_server(debug=True)
+    #port = int(os.environ.get("PORT", 8050))
+    #app.run_server(debug=True, host="0.0.0.0", port=port)
+    app.run_server(debug=True)
