@@ -7,7 +7,7 @@ from collections import defaultdict
 import os
 
 # Initialize app
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
+app = dash.Dash(__name__, external_stylesheets=["https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css",dbc.themes.BOOTSTRAP], suppress_callback_exceptions=True)
 app.title = "Referral Generator"
 server = app.server
 
@@ -44,6 +44,7 @@ def create_accordion():
     items = []
     for service, headers in results.items():
         definition = definitions.get(service, "No definition available.")
+        info_icon_id = f"info-icon-{service.replace(' ', '-').replace('/', '').replace(',', '').lower()}"
         sub_items = []
         for header, options in headers.items():
             checklist = dbc.Checklist(
@@ -56,12 +57,39 @@ def create_accordion():
             sub_items, flush=True, start_collapsed=True, always_open=True, id=f"sub-accordion-{service}"
         )
 
-        items.append(
-            dbc.AccordionItem(
-                [html.P(definition), sub_accordion],
-                title=service,
-                item_id=service
+        # Main accordion item
+        accordion_header = html.Span([
+            html.Span(service),
+            html.I(className="fa fa-info-circle", id=info_icon_id, style={
+                "cursor": "pointer",
+                "marginLeft": "8px",
+                "color": "#0d6efd",
+                "fontSize": "14px"
+            }),
+            dbc.Popover(
+                [dbc.PopoverHeader("Definition"), dbc.PopoverBody(definition)],
+                id=f"popover-{info_icon_id}",
+                target=info_icon_id,
+                trigger="hover",
+                placement="right",
+                style={"maxWidth": "300px"}
             )
+        ])
+
+        items.append(
+            html.Div([
+                dbc.AccordionItem(
+                    sub_accordion,
+                    title=accordion_header,
+                    item_id=service
+                )
+            ], style={
+                "border": "3px solid #F06D1A",
+                "borderRadius": "8px",
+                "marginBottom": "4px",
+                "boxShadow": "0 2px 4px rgba(0, 0, 0, 0.08)",
+                "backgroundColor": "#FFFFFFB2"
+            })
         )
     return items
 
@@ -143,7 +171,7 @@ def referral_page():
         for header, functions in headers.items():
             copy_lines.append(f"CGH Specific Means: {option}")
             copy_lines.append(f"- Service Function/Needs: {', '.join(functions)}")
-            copy_lines.append(f"  Means from Original SST: {header}")
+            #copy_lines.append(f"  Means from Original SST: {header}")
             copy_lines.append("")
 
     return dbc.Container([
@@ -152,7 +180,7 @@ def referral_page():
             html.Thead(html.Tr([
                 html.Th("CGH Specific Means", style={"width": "30%"}),
                 html.Th("Service Function / Need", style={"width": "40%"}),
-                html.Th("Means from Original SST", style={"width": "30%"})
+                html.Th("Function", style={"width": "30%"})
             ])),
             html.Tbody(table_rows)
         ], bordered=True, hover=False, responsive=True, className="table-fixed"),
@@ -217,3 +245,4 @@ def generate_referral_and_redirect(n_clicks, values, ids):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8050))
     app.run_server(debug=True, host="0.0.0.0", port=port)
+    #app.run_server(debug=True)
