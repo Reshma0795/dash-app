@@ -86,9 +86,10 @@ def create_accordion():
             ], style={
                 "border": "3px solid #F06D1A",
                 "borderRadius": "8px",
-                "marginBottom": "4px",
+                "marginBottom": "2px",
                 "boxShadow": "0 2px 4px rgba(0, 0, 0, 0.08)",
-                "backgroundColor": "#FFFFFFB2"
+                "backgroundColor": "#FFFFFFB2",
+                "padding": "0px"
             })
         )
     return items
@@ -110,7 +111,7 @@ def display_page(pathname):
 # Page: Main
 def main_page():
     return dbc.Container([
-        html.H2("List of Suggested Actions", className="my-4"),
+        html.H2("List of Suggested Actions", className="my-4 text-center"),
         dcc.Store(id="session-id", storage_type="session"),
         dbc.Accordion(create_accordion(), start_collapsed=True, always_open=True, id="main-accordion"),
         html.Br(),
